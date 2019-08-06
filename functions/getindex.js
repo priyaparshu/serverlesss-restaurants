@@ -1,15 +1,15 @@
 'use strict';
 var Promise = require('bluebird');
 const fs = Promise.promisifyAll(require('fs'));
+const Mustache = require('mustache');
 
 var http = require('superagent-promise')(require('superagent'), Promise);
 
-//const Mustache = require('mustache');
 const restaurantsApiRoot = process.env.restaurants_api;
 const days = ['Sunday', 'Monday', 'Wednesday', 'Thurday', 'Friday', 'Saturday'];
 
 
-var html
+var html;
 
 async function getrestaurants() {
     try {
@@ -23,18 +23,20 @@ async function getrestaurants() {
 
 async function loadhtml() {
     if (!html) {
-        return await fs.readFileAsync('static/index.html', 'utf-8');
+        html = await fs.readFileAsync('static/index.html', 'utf-8');
+        console.log('tmp', html)
     }
+    return html;
 }
 
 module.exports.handler = async (event, context) => {
-    html = await loadhtml();
+    //html = await loadhtml();
+    let template = await loadhtml();
+    console.log('After return', template)
     let restaurants = await getrestaurants();
-    console.log("rest", restaurants);
-
     let dayOfWeek = days[new Date().getDay()]
     console.log(dayOfWeek);
-    //html = Mustache.render(template, { dayOfWeek });
+    html = Mustache.render(template, { dayOfWeek, restaurants, });
 
     const response = {
         statusCode: 200,
